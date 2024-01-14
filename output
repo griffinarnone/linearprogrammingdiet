@@ -1,0 +1,17 @@
+Status: 1
+Optimal servings:
+Barilla_Rotini_Servings: 0.0
+Honey_Bunches_of_Oats_Servings: 5.0
+Horizon_Organic_Milk_Servings: 52.0
+Smuckers_Peanut_Butter_Servings: 56.0
+Vanilla_Gatorade_Servings: 0.0
+Optimal weekly cost: 53.87
+
+Measurement of each nutritional value under optimal solution:
+Sodium: 8460.0 mg per week
+Energy: 19690.0 cal per week
+Protein: 983.0 g per week
+Vitamin D: 150.0 mcg per week
+Calcium: 17578.0 mg per week
+Iron: 185.0 mg per week
+Potassium: 36100.0 mg per week
