@@ -1,0 +1,8 @@
+ADJUSTED CODE TO MEET FINAL REQUIREMENT (all that changes is lowerbound is set to 1)
+
+# Decision Variables
+x1 = LpVariable("Vanilla_Gatorade_Servings", lowBound=1, cat='Integer')
+x2 = LpVariable("Honey_Bunches_of_Oats_Servings", lowBound=1, cat='Integer')
+x3 = LpVariable("Barilla_Rotini_Servings", lowBound=1, cat='Integer')
+x4 = LpVariable("Horizon_Organic_Milk_Servings", lowBound=1, cat='Integer')
+x5 = LpVariable("Smuckers_Peanut_Butter_Servings", lowBound=1, cat='Integer')
