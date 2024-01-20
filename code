@@ -1,56 +1,192 @@
-from pulp import LpProblem, LpVariable, LpMinimize
+import pandas as pd
+import numpy as np
 
-# Linear programming problem
-prob = LpProblem("Nutrition_Optimization", LpMinimize)
+import matplotlib.pyplot as plt
+import seaborn as sns
+sns.set()
 
-# Decision Variables
-x1 = LpVariable("Vanilla_Gatorade_Servings", lowBound=0, cat='Integer')
-x2 = LpVariable("Honey_Bunches_of_Oats_Servings", lowBound=0, cat='Integer')
-x3 = LpVariable("Barilla_Rotini_Servings", lowBound=0, cat='Integer')
-x4 = LpVariable("Horizon_Organic_Milk_Servings", lowBound=0, cat='Integer')
-x5 = LpVariable("Smuckers_Peanut_Butter_Servings", lowBound=0, cat='Integer')
+#### Downloading and reading the the HMEQ data set into python (on mac) ####
+HMEQ_file = '/Users/griffinarnone/Library/Mobile Documents/com~apple~CloudDocs/Coding Work/practical-machine-learning/assignment01/HMEQ_Loss.csv'
 
-# Objective Function
-prob += 3.44 * x1 + 0.47 * x2 + 0.51 * x3 + 0.7 * x4 + 0.27 * x5, "Total_Cost"
+df = pd.read_csv(HMEQ_file)
 
-# Nutritional Constraints (Weekly Limits)
-prob += 290 * x1 + 180 * x2 + 0 * x3 + 135 * x4 + 95 * x5 <= 5000 * 7, "Sodium_Constraint"
-prob += 370 * x1 + 170 * x2 + 190 * x3 + 160 * x4 + 190 * x5 >= 2000 * 7, "Energy_Constraint"
-prob += 20 * x1 + 3 * x2 + 10 * x3 + 8 * x4 + 8 * x5 >= 50 * 7, "Protein_Constraint"
-prob += 3 * x1 + 2 * x2 + 0 * x3 + 2.5 * x4 + 0 * x5 >= 20 * 7, "Vitamin_D_Constraint"
-prob += 390 * x1 + 10 * x2 + 14 * x3 + 300 * x4 + 18 * x5 >= 1300 * 7, "Calcium_Constraint"
-prob += 1.5 * x1 + 16.2 * x2 + 2 * x3 + 0 * x4 + 1 * x5 >= 18 * 7, "Iron_Constraint"
-prob += 650 * x1 + 80 * x2 + 245 * x3 + 410 * x4 + 201 * x5 >= 4700 * 7, "Potassium_Constraint"
+#### Exploring the input and target variables using statistical techniques ####
 
-# Solve the problem
-prob.solve()
+# # Revealing variable names as well as the number of non-null data points and variable types
+# df.info()
+# print("\n\n")
 
-# Display the results
-print("Status:", prob.status)
-print("Optimal servings:")
-for var in prob.variables():
-    print(f"{var.name}: {var.varValue}")
+# # Show the first 5 rows of data
+# print(df.head().T)
+# print("\n\n")
 
-# Print optimal weekly cost
-print("Optimal weekly cost:", round(prob.objective.value(), 2))
+# # A clear representation of the data types of each variable
+# print(df.dtypes)
+# print("\n\n")
 
-# Coefficients matrix for the nutritional constraints
-A = [
-    [290, 180, 0, 135, 95],  # Sodium constraint
-    [370, 170, 190, 160, 190],  # Energy constraint
-    [20, 3, 10, 8, 8],  # Protein constraint
-    [3, 2, 0, 2.5, 0],  # Vitamin D constraint
-    [390, 10, 14, 300, 18],  # Calcium constraint
-    [1.5, 16.2, 2, 0, 1],  # Iron constraint
-    [650, 80, 245, 410, 201]  # Potassium constraint
-]
+# # A statistical description of the data
+# print(df.describe().T)
+# print("\n\n")
 
-# Nutritional values and units
-nutritional_values = ["Sodium", "Energy", "Protein", "Vitamin D", "Calcium", "Iron", "Potassium"]
-nutritional_units = ["mg", "cal", "g", "mcg", "mg", "mg", "mg"]
+# Categorizing the variables by type
+TARGET_A = 'TARGET_BAD_FLAG'
+TARGET_B = 'TARGET_LOSS_AMT'
 
-# Calculate and print the measurement of each nutritional value (for the week)
-print("\nMeasurement of each nutritional value under optimal solution:")
-for nutrient, unit, coefficients in zip(nutritional_values, nutritional_units, A):
-    total_measurement = sum([var.varValue * value for var, value in zip(prob.variables(), coefficients)])
-    print(f"{nutrient}: {total_measurement} {unit} per week")
+dt = df.dtypes
+objList = []
+intList = []
+floatList = []
+
+for i in dt.index:
+    if i in ([TARGET_A, TARGET_B]) : continue
+    if dt[i] in (["object"]) : objList.append(i)
+    if dt[i] in (["int64"]) : intList.append(i)
+    if dt[i] in (["float64"]) : floatList.append(i)
+
+# # Showing default rates by REASON and JOB and the default amounts on average
+# for i in objList:
+#     print("Class = ", i)
+#     g = df.groupby(i)
+#     print(g[i].count())
+#     print("\n")
+#     x = g[TARGET_A].mean()
+#     print("Default Probability per", x)
+#     print("\n")
+#     y = g[TARGET_B].mean()
+#     print("Avg Default Amount per", y)
+#     print("\n")
+
+# # Showing default rate and amounts for continuous variables
+# print("Integer Variables\n\n")
+# for i in intList:
+#     print("Variable = ", i)
+#     g = df.groupby(TARGET_A)
+#     x = g[i].mean()
+#     print("Default Probability", x)
+#     print("\n")
+#     c = df[i].corr(df[TARGET_A])
+#     c = round(100*c, 1)
+#     print("Default Correlation = ", c, "%")
+#     print("\n")
+
+# print("Float Variables\n\n")
+# for i in floatList:
+#     print("Variable = ", i)
+#     g = df.groupby(TARGET_A)
+#     x = g[i].mean()
+#     print("Default Probability", x)
+#     c = df[i].corr(df[TARGET_A])
+#     c = round(100*c, 1)
+#     print("Default Correlation = ", c, "%")
+#     print("\n")
+
+#### Exploring the input and target variables using graphing and other visualization techniques ####
+
+# # Visualize some pie charts
+# for i in objList:
+#     x = df[i].value_counts(dropna=False)
+#     #print(x)
+#     theLabels = x.axes[0].tolist()
+#     print(theLabels)
+#     theSlices = list(x)
+#     print(theSlices)
+#     plt.pie(theSlices, labels=theLabels, startangle=90, shadow=True, autopct="%1.1f%%")
+#     plt.title("Pie Chart: " + i)
+#     plt.show()
+
+# # Explode pie chart slices (example) for effect
+# x = df["JOB"].value_counts(dropna=False)
+# theLabels = x.axes[0].tolist()
+# theSlices = list(x)
+# explodeList = [0 for i in theSlices]
+# explodeList [2] = 0.3
+# print(theLabels)
+# print(theSlices)
+# print(explodeList)
+# plt.pie(theSlices, labels=theLabels, startangle=90, explode=explodeList, shadow=True, autopct="%1.1f%%")
+# plt.title ("Pie Chart: " + i)
+# plt.show()
+    
+# # Visualizing a histogram for integer and float variable types
+# for i in intList:
+#     plt.hist(df[i])
+#     plt.xlabel(i)
+#     plt.ylabel("frequency")
+#     plt.show()
+
+# for i in floatList:
+#     plt.hist(df[i])
+#     plt.xlabel(i)
+#     plt.ylabel("frequency")
+#     plt.show()
+
+#### One Hot Encoding ####
+
+# Converting categorical variables into numerical ones using one hot encoding
+for i in objList:
+    print("Class = ", i)
+    print(df[i].unique())
+    g = df.groupby(i)
+    x = g[TARGET_A].mean()
+    print("Default Probability", x)
+    print("\n")
+    # x = g[TARGET_B].mean()
+    x = g[TARGET_B].median()
+    print("Avg Default Amount", x)
+    print("\n")
+
+for i in objList:
+    print("Class = ", i)
+    thePrefix = "z_" + i
+    # print(thePrefix)
+    y = pd.get_dummies(df[i], prefix=thePrefix, dummy_na=False)
+    df = pd.concat([df, y], axis=1)
+
+#### Impute missing data (object data type) ####
+
+# Fill missing data (object data type) with MISSING (delete original column)
+for i in objList:
+    if df[i].isna().sum() == 0: continue
+    print(i)
+    print("HAS MISSING\n")
+    NAME = "IMP " + i
+    # print(NAME)
+    df[NAME] = df[i]
+    df[NAME] = df[NAME].fillna("MISSING")
+    print("variable", i, "has this many missing", df[i].isna().sum())
+    print("variable", NAME, "has this many missing", df[NAME].isna().sum())
+    print("\n")
+    df = df.drop(i, axis=1)
+
+#### Impute missing data (continuous data type) ####
+
+# Fill missing data (continuous data type) with the median (delete original column)
+for i in floatList:
+    if df[i].isna().sum() == 0: continue
+    FLAG = "M " + i
+    IMP = "IMP " + i
+    print(i)
+    print(df[i].isna().sum())
+    print(FLAG)
+    print(IMP)
+    print("\n")
+    df[FLAG] = df[i].isna() + 0
+    df[IMP] = df[i]
+    df.loc[df[IMP].isna(), IMP] = df[i].median()
+    df = df.drop(i, axis=1)
+    
+for i in intList:
+    if df[i].isna().sum() == 0: continue
+    FLAG = "M " + i
+    IMP = "IMP " + i
+    print(i)
+    print(df[i].isna().sum())
+    print(FLAG)
+    print(IMP)
+    print("\n")
+    df[FLAG] = df[i].isna() + 0
+    df[IMP] = df[i]
+    df.loc[df[IMP].isna(), IMP] = df[i].median()
+    df = df.drop(i, axis=1)
+
+print(df.describe().T)
